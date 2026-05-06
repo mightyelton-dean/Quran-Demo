@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran - Al-Qur'an Al-Kareem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+        .quran-text { font-family: 'Amiri', serif; font-size: 1.5rem; line-height: 3.1rem; }
+        .verse { transition: all 0.3s ease; }
+        .verse:hover { background-color: #f8fafc; }
+        .dark .verse:hover { background-color: #1f2937; }
+        .surah-header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+
+<div class="max-w-4xl mx-auto">
+
+    <!-- Top Navigation -->
+    <nav class="bg-white dark:bg-gray-900 border-b sticky top-0 z-50 shadow-sm">
+        <div class="px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-emerald-600 rounded-3xl flex items-center justify-center text-3xl text-white">ﷺ</div>
+                <div>
+                    <h1 class="text-3xl font-bold">Quran</h1>
+                    <p class="text-xs text-emerald-600 -mt-1">Al-Qur'an Al-Kareem</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-6 text-2xl">
+                <button onclick="toggleSearch()" class="hover:text-emerald-600"><i class="fas fa-search"></i></button>
+                <button onclick="showSettings()" class="hover:text-emerald-600"><i class="fas fa-cog"></i></button>
+                <button onclick="showBookmarks()" class="hover:text-emerald-600"><i class="fas fa-bookmark"></i></button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div id="search-bar" class="hidden px-4 pb-4">
+            <input id="search-input" type="text" placeholder="Search Surah (Arabic or English)..." 
+                   onkeyup="searchSurahs()" 
+                   class="w-full px-6 py-4 bg-gray-100 dark:bg-gray-800 rounded-3xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-lg">
+        </div>
+    </nav>
+
+    <!-- Surah List -->
+    <div id="surah-list-page" class="p-4">
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+            <i class="fas fa-list"></i> All Surahs (114)
+        </h2>
+        <div id="surah-grid" class="grid grid-cols-1 gap-4"></div>
+    </div>
+
+    <!-- Reader Page -->
+    <div id="reader-page" class="hidden">
+        <div class="surah-header text-white p-6">
+            <button onclick="backToList()" class="flex items-center gap-2 mb-4 text-white/80 hover:text-white">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <div class="flex justify-between items-end">
+                <div>
+                    <div id="reader-surah-no" class="text-6xl font-black opacity-20"></div>
+                    <div id="reader-surah-ar" class="text-4xl font-bold"></div>
+                    <div id="reader-surah-en" class="text-xl opacity-90"></div>
+                </div>
+                <div class="text-right">
+                    <div id="reader-type" class="uppercase tracking-widest text-sm"></div>
+                    <div id="reader-ayahs" class="text-sm"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Translation Selector -->
+        <div class="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b z-40">
+            <select id="translation-select" onchange="changeTranslation()" 
+                    class="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-3xl px-6 py-4 text-base font-medium">
+                <option value="sahih">Sahih International</option>
+                <option value="yusuf">Yusuf Ali</option>
+                <option value="pickthall">Pickthall</option>
+                <option value="urdu">Urdu - Jalandhry</option>
+                <option value="french">French - Hamidullah</option>
+                <option value="indonesian">Indonesian</option>
+            </select>
+        </div>
+
+        <div class="p-6">
+            <div id="bismillah" class="text-center my-12 text-4xl text-emerald-600 dark:text-emerald-400">
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </div>
+            <div id="verses-container" class="space-y-12"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Audio Player -->
+<div id="audio-player" class="hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t shadow-2xl p-4 z-50">
+    <div class="max-w-4xl mx-auto flex items-center gap-4">
+        <button onclick="toggleAudio()" id="play-btn"
+                class="w-14 h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl flex items-center justify-center text-3xl">
+            <i class="fas fa-play"></i>
+        </button>
+        <div class="flex-1 min-w-0">
+            <div id="now-playing" class="font-semibold text-base truncate"></div>
+            <audio id="quran-audio" class="w-full mt-1"></audio>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+    <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="p-6 border-b dark:border-gray-700">
+            <h3 class="text-2xl font-bold">Settings</h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <div>
+                <label class="block text-sm font-medium mb-2">Font Size</label>
+                <input type="range" min="18" max="32" value="24" id="font-slider" 
+                       oninput="changeFontSize(this.value)" class="w-full">
+                <div class="flex justify-between text-xs text-gray-500">
+                    <span>Small</span><span>Large</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-3">Theme</label>
+                <div class="flex gap-3">
+                    <button onclick="setTheme('light')" class="flex-1 py-3 border rounded-2xl">Light</button>
+                    <button onclick="setTheme('dark')" class="flex-1 py-3 border rounded-2xl">Dark</button>
+                </div>
+            </div>
+            <div class="pt-4 border-t dark:border-gray-700">
+                <button onclick="hideSettings()" 
+                        class="w-full py-4 bg-emerald-600 text-white rounded-3xl font-medium">
+                    Close Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bookmarks Modal -->
+<div id="bookmark-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+    <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md mx-4">
+        <div class="p-6 border-b flex justify-between items-center">
+            <h3 class="text-2xl font-bold">Bookmarks</h3>
+            <button onclick="hideBookmarks()" class="text-4xl text-gray-400">×</button>
+        </div>
+        <div id="bookmarks-list" class="p-6 max-h-96 overflow-auto space-y-4"></div>
+    </div>
+</div>
+
+<script>
+// ==================== EXPANDED DATA (30+ Surahs) ====================
+const surahs = [
+    {id:1,name:"الفاتحة",english:"The Opening",type:"Meccan",ayahs:7,audio:"https://cdn.islamic.network/quran/audio/1.mp3"},
+    {id:2,name:"البقرة",english:"The Cow",type:"Medinan",ayahs:286,audio:"https://cdn.islamic.network/quran/audio/2.mp3"},
+    {id:3,name:"آل عمران",english:"Family of Imran",type:"Medinan",ayahs:200,audio:"https://cdn.islamic.network/quran/audio/3.mp3"},
+    {id:4,name:"النساء",english:"The Women",type:"Medinan",ayahs:176,audio:"https://cdn.islamic.network/quran/audio/4.mp3"},
+    {id:5,name:"المائدة",english:"The Table",type:"Medinan",ayahs:120,audio:"https://cdn.islamic.network/quran/audio/5.mp3"},
+    {id:6,name:"الأنعام",english:"The Cattle",type:"Meccan",ayahs:165,audio:"https://cdn.islamic.network/quran/audio/6.mp3"},
+    {id:7,name:"الأعراف",english:"The Heights",type:"Meccan",ayahs:206,audio:"https://cdn.islamic.network/quran/audio/7.mp3"},
+    {id:8,name:"الأنفال",english:"The Spoils",type:"Medinan",ayahs:75,audio:"https://cdn.islamic.network/quran/audio/8.mp3"},
+    {id:9,name:"التوبة",english:"The Repentance",type:"Medinan",ayahs:129,audio:"https://cdn.islamic.network/quran/audio/9.mp3"},
+    {id:10,name:"يونس",english:"Jonah",type:"Meccan",ayahs:109,audio:"https://cdn.islamic.network/quran/audio/10.mp3"},
+    {id:11,name:"هود",english:"Hud",type:"Meccan",ayahs:123,audio:"https://cdn.islamic.network/quran/audio/11.mp3"},
+    {id:12,name:"يوسف",english:"Joseph",type:"Meccan",ayahs:111,audio:"https://cdn.islamic.network/quran/audio/12.mp3"},
+    {id:13,name:"الرعد",english:"The Thunder",type:"Medinan",ayahs:43,audio:"https://cdn.islamic.network/quran/audio/13.mp3"},
+    {id:14,name:"إبراهيم",english:"Abraham",type:"Meccan",ayahs:52,audio:"https://cdn.islamic.network/quran/audio/14.mp3"},
+    {id:15,name:"الحجر",english:"The Rock",type:"Meccan",ayahs:99,audio:"https://cdn.islamic.network/quran/audio/15.mp3"},
+    {id:16,name:"النحل",english:"The Bee",type:"Meccan",ayahs:128,audio:"https://cdn.islamic.network/quran/audio/16.mp3"},
+    {id:17,name:"الإسراء",english:"The Night Journey",type:"Meccan",ayahs:111,audio:"https://cdn.islamic.network/quran/audio/17.mp3"},
+    {id:18,name:"الكهف",english:"The Cave",type:"Meccan",ayahs:110,audio:"https://cdn.islamic.network/quran/audio/18.mp3"},
+    {id:19,name:"مريم",english:"Mary",type:"Meccan",ayahs:98,audio:"https://cdn.islamic.network/quran/audio/19.mp3"},
+    {id:20,name:"طه",english:"Ta-Ha",type:"Meccan",ayahs:135,audio:"https://cdn.islamic.network/quran/audio/20.mp3"},
+    {id:21,name:"الأنبياء",english:"The Prophets",type:"Meccan",ayahs:112,audio:"https://cdn.islamic.network/quran/audio/21.mp3"},
+    {id:22,name:"الحج",english:"The Pilgrimage",type:"Medinan",ayahs:78,audio:"https://cdn.islamic.network/quran/audio/22.mp3"},
+    {id:23,name:"المؤمنون",english:"The Believers",type:"Meccan",ayahs:118,audio:"https://cdn.islamic.network/quran/audio/23.mp3"},
+    {id:24,name:"النور",english:"The Light",type:"Medinan",ayahs:64,audio:"https://cdn.islamic.network/quran/audio/24.mp3"},
+    {id:25,name:"الفرقان",english:"The Criterion",type:"Meccan",ayahs:77,audio:"https://cdn.islamic.network/quran/audio/25.mp3"},
+    {id:36,name:"يس",english:"Ya-Sin",type:"Meccan",ayahs:83,audio:"https://cdn.islamic.network/quran/audio/36.mp3"},
+    {id:55,name:"الرحمن",english:"The Beneficent",type:"Medinan",ayahs:78,audio:"https://cdn.islamic.network/quran/audio/55.mp3"},
+    {id:56,name:"الواقعة",english:"The Inevitable",type:"Meccan",ayahs:96,audio:"https://cdn.islamic.network/quran/audio/56.mp3"},
+    {id:67,name:"الملك",english:"The Sovereignty",type:"Meccan",ayahs:30,audio:"https://cdn.islamic.network/quran/audio/67.mp3"},
+    {id:112,name:"الإخلاص",english:"The Sincerity",type:"Meccan",ayahs:4,audio:"https://cdn.islamic.network/quran/audio/112.mp3"},
+    {id:113,name:"الفلق",english:"The Daybreak",type:"Meccan",ayahs:5,audio:"https://cdn.islamic.network/quran/audio/113.mp3"},
+    {id:114,name:"الناس",english:"Mankind",type:"Meccan",ayahs:6,audio:"https://cdn.islamic.network/quran/audio/114.mp3"}
+];
+
+let currentSurah = null;
+let currentTranslation = "sahih";
+let bookmarks = JSON.parse(localStorage.getItem("quranBookmarks")) || [];
+let fontSize = 24;
+
+// Sample verses (expandable)
+const sampleVersesData = {
+    1: [{num:1,ar:"بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",sahih:"In the name of Allah, the Entirely Merciful, the Especially Merciful.",yusuf:"In the name of Allah, Most Gracious, Most Merciful.",pickthall:"In the name of Allah, the Beneficent, the Merciful.",urdu:"اللہ کے نام سے شروع جو بڑا مہربان نہایت رحم والا ہے"}],
+    112: [{num:1,ar:"قُلْ هُوَ اللَّهُ أَحَدٌ",sahih:"Say, He is Allah, the One and Only.",yusuf:"Say: He is Allah, the One and Only.",pickthall:"Say: He is Allah, the One!",urdu:"کہو کہ وہ اللہ ایک ہے"}]
+};
+
+// Render Surah List
+function renderSurahs(filtered = surahs) {
+    const container = document.getElementById("surah-grid");
+    container.innerHTML = "";
+    filtered.forEach(s => {
+        const card = document.createElement("div");
+        card.className = "bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 hover:border-emerald-300 cursor-pointer transition-all";
+        card.innerHTML = `
+            <div class="flex gap-5">
+                <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 rounded-3xl flex items-center justify-center text-2xl font-bold">${s.id}</div>
+                <div class="flex-1">
+                    <div class="text-2xl font-bold">${s.name}</div>
+                    <div class="text-gray-500 dark:text-gray-400">${s.english}</div>
+                </div>
+                <div class="text-right text-sm">
+                    <div class="text-emerald-600">${s.type}</div>
+                    <div>${s.ayahs} Ayahs</div>
+                </div>
+            </div>
+        `;
+        card.onclick = () => openReader(s);
+        container.appendChild(card);
+    });
+}
+
+function openReader(surah) {
+    currentSurah = surah;
+    document.getElementById("surah-list-page").classList.add("hidden");
+    document.getElementById("reader-page").classList.remove("hidden");
+
+    document.getElementById("reader-surah-no").textContent = surah.id;
+    document.getElementById("reader-surah-ar").textContent = surah.name;
+    document.getElementById("reader-surah-en").textContent = surah.english;
+    document.getElementById("reader-type").textContent = surah.type;
+    document.getElementById("reader-ayahs").textContent = `${surah.ayahs} verses`;
+
+    renderVerses(surah);
+    
+    // Audio Player
+    document.getElementById("audio-player").classList.remove("hidden");
+    const audio = document.getElementById("quran-audio");
+    audio.src = surah.audio;
+    document.getElementById("now-playing").textContent = `${surah.name} — ${surah.english}`;
+}
+
+function renderVerses(surah) {
+    const container = document.getElementById("verses-container");
+    container.innerHTML = "";
+    const verses = sampleVersesData[surah.id] || sampleVersesData[1];
+
+    verses.forEach(v => {
+        const div = document.createElement("div");
+        div.className = "verse p-7 rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800";
+        div.innerHTML = `
+            <div class="flex gap-6">
+                <div class="w-11 h-11 flex-shrink-0 bg-emerald-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center font-bold text-emerald-600">${v.num}</div>
+                <div class="flex-1">
+                    <p class="quran-text text-right mb-8" style="font-size:${fontSize}px">${v.ar}</p>
+                    <p class="leading-relaxed text-gray-700 dark:text-gray-300">${v[currentTranslation] || v.sahih}</p>
+                    <button onclick="bookmarkVerse(${surah.id}, ${v.num})" class="mt-6 text-emerald-600 hover:text-emerald-700 flex items-center gap-2">
+                        <i class="fas fa-bookmark"></i> Bookmark this verse
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function changeTranslation() {
+    currentTranslation = document.getElementById("translation-select").value;
+    if (currentSurah) renderVerses(currentSurah);
+}
+
+function changeFontSize(size) {
+    fontSize = parseInt(size);
+    if (currentSurah) renderVerses(currentSurah);
+}
+
+// Controls
+function backToList() {
+    document.getElementById("reader-page").classList.add("hidden");
+    document.getElementById("surah-list-page").classList.remove("hidden");
+    document.getElementById("audio-player").classList.add("hidden");
+}
+
+function toggleAudio() {
+    const audio = document.getElementById("quran-audio");
+    const btn = document.getElementById("play-btn");
+    if (audio.paused) {
+        audio.play();
+        btn.innerHTML = `<i class="fas fa-pause"></i>`;
+    } else {
+        audio.pause();
+        btn.innerHTML = `<i class="fas fa-play"></i>`;
+    }
+}
+
+function bookmarkVerse(surahId, verseNum) {
+    const key = `${surahId}:${verseNum}`;
+    if (bookmarks.includes(key)) {
+        bookmarks = bookmarks.filter(b => b !== key);
+        alert("Bookmark removed");
+    } else {
+        bookmarks.push(key);
+        alert(`✅ Bookmarked - Surah ${surahId}, Verse ${verseNum}`);
+    }
+    localStorage.setItem("quranBookmarks", JSON.stringify(bookmarks));
+}
+
+function showBookmarks() {
+    const list = document.getElementById("bookmarks-list");
+    list.innerHTML = bookmarks.length ? "" : `<p class="text-center py-16 text-gray-500">No bookmarks yet</p>`;
+    
+    bookmarks.forEach(key => {
+        const [s, v] = key.split(":");
+        const item = document.createElement("div");
+        item.className = "p-5 bg-gray-50 dark:bg-gray-800 rounded-3xl flex justify-between items-center";
+        item.innerHTML = `
+            <div>Surah ${s} • Verse ${v}</div>
+            <button onclick="removeBookmark('${key}');event.stopImmediatePropagation()" class="text-red-500"><i class="fas fa-trash"></i></button>
+        `;
+        list.appendChild(item);
+    });
+    document.getElementById("bookmark-modal").classList.remove("hidden");
+}
+
+function removeBookmark(key) {
+    bookmarks = bookmarks.filter(b => b !== key);
+    localStorage.setItem("quranBookmarks", JSON.stringify(bookmarks));
+    showBookmarks();
+}
+
+function hideBookmarks() {
+    document.getElementById("bookmark-modal").classList.add("hidden");
+}
+
+function showSettings() {
+    document.getElementById("settings-modal").classList.remove("hidden");
+}
+
+function hideSettings() {
+    document.getElementById("settings-modal").classList.add("hidden");
+}
+
+function setTheme(mode) {
+    if (mode === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+}
+
+function toggleSearch() {
+    document.getElementById("search-bar").classList.toggle("hidden");
+}
+
+function searchSurahs() {
+    const term = document.getElementById("search-input").value.toLowerCase().trim();
+    const filtered = surahs.filter(s => 
+        s.name.toLowerCase().includes(term) || s.english.toLowerCase().includes(term)
+    );
+    renderSurahs(filtered);
+}
+
+// Initialize
+window.onload = () => {
+    renderSurahs();
+    console.log("%c🎉 Rich Quran Demo Loaded Successfully!", "color:#10b981;font-size:18px;font-weight:bold");
+};
+</script>
+</body>
+</html>
