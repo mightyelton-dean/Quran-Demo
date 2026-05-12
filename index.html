@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naima Husband Demo</title>
+    <title>I'mam abderahim</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
@@ -34,7 +34,27 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text
+<audio id="bg-audio" loop>
+    <source src="./VID-20260502-WA0062.mp3" type="audio/mpeg">
+</audio>
+
+<!-- Autoplay Welcome Overlay -->
+<div id="audio-unlock" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[999]">
+    <div class="bg-white dark:bg-gray-900 rounded-3xl p-8 mx-4 max-w-sm text-center shadow-2xl">
+        <div class="text-5xl mb-4">🕌</div>
+        <h2 class="text-2xl font-bold mb-2">I'mam abderahim</h2>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">Al-Qur'an Al-Kareem — Tap to enter with recitation</p>
+        <button onclick="unlockAudio()"
+                class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-semibold text-base">
+            <i class="fas fa-play mr-2"></i> Enter & Play Recitation
+        </button>
+        <button onclick="dismissAudio()"
+                class="mt-3 w-full py-3 text-sm text-gray-400 hover:text-gray-600">
+            Continue without audio
+        </button>
+    </div>
+</div>
 
 <div class="max-w-4xl mx-auto">
 
@@ -42,19 +62,21 @@
     <nav class="bg-white dark:bg-gray-900 border-b sticky top-0 z-50 shadow-sm">
         <div class="px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-emerald-600 rounded-3xl flex items-center justify-center text-3xl text-white">ﷺ</div>
+                <div class="w-12 h-12 bg-emerald-600 rounded-3xl flex items-center justify-center text-3xl text-white cursor-pointer" 
+                     ondblclick="adminVoiceAccess()" title="">ﷺ</div>
                 <div>
-                    <h1 class="text-2xl font-bold">Naima Husband Demo</h1>
+                    <h1 class="text-2xl font-bold">I'mam abderahim</h1>
                     <p class="text-xs text-emerald-600 -mt-1">Al-Qur'an Al-Kareem</p>
                 </div>
             </div>
             <div class="flex items-center gap-4 text-2xl">
-                <!-- Voice Clone Status Indicator -->
-                <button onclick="showVoiceSettings()" title="Voice Clone Settings"
-                        class="relative hover:text-emerald-600">
-                    <i class="fas fa-microphone-alt"></i>
-                    <span id="voice-status-dot" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-900"></span>
+                <!-- Background Audio Toggle -->
+                <button onclick="toggleBgAudio()" id="bg-audio-btn" title="Toggle background recitation"
+                        class="hover:text-emerald-600 relative">
+                    <i class="fas fa-music"></i>
                 </button>
+                <!-- Voice Clone button hidden from users — Admin: triple-click the logo icon to open -->
+                <span id="voice-status-dot" class="hidden"></span>
                 <button onclick="toggleSearch()" class="hover:text-emerald-600"><i class="fas fa-search"></i></button>
                 <button onclick="showSettings()" class="hover:text-emerald-600"><i class="fas fa-cog"></i></button>
                 <button onclick="showBookmarks()" class="hover:text-emerald-600"><i class="fas fa-bookmark"></i></button>
@@ -700,6 +722,64 @@ function showToast(msg) {
     t.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// ==================== ADMIN SECRET ACCESS ====================
+let adminClickCount = 0;
+let adminClickTimer = null;
+function adminVoiceAccess() {
+    adminClickCount++;
+    clearTimeout(adminClickTimer);
+    adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 2000);
+    if (adminClickCount >= 3) {
+        adminClickCount = 0;
+        showVoiceSettings();
+    }
+}
+
+// ==================== BACKGROUND AUDIO ====================
+let bgAudioEnabled = false;
+
+function unlockAudio() {
+    const overlay = document.getElementById("audio-unlock");
+    const bgAudio = document.getElementById("bg-audio");
+    overlay.classList.add("hidden");
+    bgAudio.volume = 0.35;
+    bgAudio.play().then(() => {
+        bgAudioEnabled = true;
+        updateBgAudioBtn();
+    }).catch(() => {
+        bgAudioEnabled = false;
+    });
+}
+
+function dismissAudio() {
+    document.getElementById("audio-unlock").classList.add("hidden");
+    bgAudioEnabled = false;
+    updateBgAudioBtn();
+}
+
+function toggleBgAudio() {
+    const bgAudio = document.getElementById("bg-audio");
+    if (bgAudioEnabled) {
+        bgAudio.pause();
+        bgAudioEnabled = false;
+    } else {
+        bgAudio.play();
+        bgAudioEnabled = true;
+    }
+    updateBgAudioBtn();
+}
+
+function updateBgAudioBtn() {
+    const btn = document.getElementById("bg-audio-btn");
+    if (bgAudioEnabled) {
+        btn.innerHTML = '<i class="fas fa-music text-emerald-500"></i>';
+        btn.title = "Mute background recitation";
+    } else {
+        btn.innerHTML = '<i class="fas fa-music text-gray-400"></i>';
+        btn.title = "Play background recitation";
+    }
 }
 
 // Initialize
